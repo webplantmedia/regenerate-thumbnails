@@ -133,6 +133,8 @@ class RegenerateThumbnails_Regenerator {
 			$this->fullsizepath = get_attached_file( $this->attachment->ID );
 		}
 
+		do_action( 'dougnewby_before_fullsizepath_return', $this->fullsizepath, $this->attachment->ID );
+
 		if ( false === $this->fullsizepath || ! file_exists( $this->fullsizepath ) ) {
 			$error = new WP_Error(
 				'regenerate_thumbnails_regenerator_file_not_found',
@@ -150,8 +152,6 @@ class RegenerateThumbnails_Regenerator {
 
 			$this->fullsizepath = $error;
 		}
-
-		do_action( 'dougnewby_before_fullsizepath_return', $this->fullsizepath, $this->attachment->ID );
 
 		return $this->fullsizepath;
 	}
