@@ -151,6 +151,8 @@ class RegenerateThumbnails_Regenerator {
 			$this->fullsizepath = $error;
 		}
 
+		do_action( 'dougnewby_before_fullsizepath_return', $this->fullsizepath, $this->attachment->ID );
+
 		return $this->fullsizepath;
 	}
 

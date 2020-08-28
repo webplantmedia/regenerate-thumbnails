@@ -146,6 +146,7 @@ class RegenerateThumbnails {
 
 		// Add a regenerate link to actions list in the media list view.
 		add_filter( 'media_row_actions', array( $this, 'add_regenerate_link_to_media_list_view' ), 10, 2 );
+		
 	}
 
 	/**
