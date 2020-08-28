@@ -215,7 +215,7 @@ class RegenerateThumbnails {
 				'genericEditURL' => admin_url( 'post.php?action=edit&post=' ),
 			),
 			'options' => array(
-				'onlyMissingThumbnails' => apply_filters( 'regenerate_thumbnails_options_onlymissingthumbnails', true ),
+				'onlyMissingThumbnails' => apply_filters( 'regenerate_thumbnails_options_onlymissingthumbnails', false ),
 				'updatePostContents'    => apply_filters( 'regenerate_thumbnails_options_updatepostcontents', false ),
 				'deleteOldThumbnails'   => apply_filters( 'regenerate_thumbnails_options_deleteoldthumbnails', false ),
 			),
