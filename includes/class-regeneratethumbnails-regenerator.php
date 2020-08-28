@@ -122,7 +122,7 @@ class RegenerateThumbnails_Regenerator {
 	 *
 	 * @return string|WP_Error The path to the fullsize attachment, or a WP_Error object on error.
 	 */
-	public function get_fullsizepath() {
+	public function get_fullsizepath( $download = false ) {
 		if ( $this->fullsizepath ) {
 			return $this->fullsizepath;
 		}
@@ -133,13 +133,14 @@ class RegenerateThumbnails_Regenerator {
 			$this->fullsizepath = get_attached_file( $this->attachment->ID );
 		}
 
-		do_action( 'dougnewby_before_fullsizepath_return', $this->fullsizepath, $this->attachment->ID );
+		if ( $download ) {
+			do_action( 'dougnewby_before_fullsizepath_return', $this->fullsizepath, $this->attachment->ID );
+		}
 
-		if ( false === $this->fullsizepath || ! file_exists( $this->fullsizepath ) ) {
+		/*if ( false === $this->fullsizepath || ! file_exists( $this->fullsizepath ) ) {
 			$error = new WP_Error(
 				'regenerate_thumbnails_regenerator_file_not_found',
 				sprintf(
-					/* translators: The relative upload path to the attachment. */
 					__( "The fullsize image file cannot be found in your uploads directory at <code>%s</code>. Without it, new thumbnail images can't be generated.", 'regenerate-thumbnails' ),
 					_wp_relative_upload_path( $this->fullsizepath )
 				),
@@ -151,7 +152,7 @@ class RegenerateThumbnails_Regenerator {
 			);
 
 			$this->fullsizepath = $error;
-		}
+		}*/
 
 		return $this->fullsizepath;
 	}
@@ -178,7 +179,7 @@ class RegenerateThumbnails_Regenerator {
 			'delete_unregistered_thumbnail_files' => false,
 		) );
 
-		$fullsizepath = $this->get_fullsizepath();
+		$fullsizepath = $this->get_fullsizepath( true );
 		if ( is_wp_error( $fullsizepath ) ) {
 			$fullsizepath->add_data( array( 'attachment' => $this->attachment ) );
 
@@ -287,6 +288,8 @@ class RegenerateThumbnails_Regenerator {
 
 		wp_update_attachment_metadata( $this->attachment->ID, $new_metadata );
 
+		do_action( 'dougnewby_after_regenerate', $fullsizepath );
+
 		return $new_metadata;
 	}
 
@@ -310,10 +313,10 @@ class RegenerateThumbnails_Regenerator {
 			return $sizes;
 		}
 
-		$editor = wp_get_image_editor( $fullsizepath );
-		if ( is_wp_error( $editor ) ) {
-			return $sizes;
-		}
+		// $editor = wp_get_image_editor( $fullsizepath );
+		// if ( is_wp_error( $editor ) ) {
+			// return $sizes;
+		// }
 
 		$metadata = wp_get_attachment_metadata( $this->attachment->ID );
 
@@ -339,7 +342,6 @@ class RegenerateThumbnails_Regenerator {
 			}
 
 			$thumbnail = $this->get_thumbnail(
-				$editor,
 				$fullsize_metadata['width'],
 				$fullsize_metadata['height'],
 				$size_data['width'],
@@ -391,7 +393,7 @@ class RegenerateThumbnails_Regenerator {
 	 * @return array|false An array of the filename, thumbnail width, and thumbnail height,
 	 *                     or false on failure to resize such as the thumbnail being larger than the fullsize image.
 	 */
-	public function get_thumbnail( $editor, $fullsize_width, $fullsize_height, $thumbnail_width, $thumbnail_height, $crop ) {
+	public function get_thumbnail( $fullsize_width, $fullsize_height, $thumbnail_width, $thumbnail_height, $crop ) {
 		$dims = image_resize_dimensions( $fullsize_width, $fullsize_height, $thumbnail_width, $thumbnail_height, $crop );
 
 		if ( ! $dims ) {
@@ -401,10 +403,12 @@ class RegenerateThumbnails_Regenerator {
 		list( , , , , $dst_w, $dst_h ) = $dims;
 
 		$suffix   = "{$dst_w}x{$dst_h}";
-		$file_ext = strtolower( pathinfo( $this->get_fullsizepath(), PATHINFO_EXTENSION ) );
+		// $file_ext = strtolower( pathinfo( $this->get_fullsizepath(), PATHINFO_EXTENSION ) );
+		$parts = pathinfo( $this->get_fullsizepath() );
+		$filename = $parts['dirname'] . '/' . $parts['filename'] . '-' . $suffix . '.' . $parts['extension'];
 
 		return array(
-			'filename' => $editor->generate_filename( $suffix, null, $file_ext ),
+			'filename' => $filename,
 			'width'    => $dst_w,
 			'height'   => $dst_h,
 		);
@@ -552,8 +556,8 @@ class RegenerateThumbnails_Regenerator {
 
 			return $fullsizepath;
 		}
-
-		$editor = wp_get_image_editor( $fullsizepath );
+		
+		/* $editor = wp_get_image_editor( $fullsizepath );
 		if ( is_wp_error( $editor ) ) {
 			// Display a more helpful error message.
 			if ( 'image_no_editor' === $editor->get_error_code() ) {
@@ -566,7 +570,7 @@ class RegenerateThumbnails_Regenerator {
 			) );
 
 			return $editor;
-		}
+		} */
 
 		$metadata = wp_get_attachment_metadata( $this->attachment->ID );
 
@@ -640,7 +644,7 @@ class RegenerateThumbnails_Regenerator {
 		foreach ( $registered_sizes as $size ) {
 			// Width and height are needed to generate the thumbnail filename.
 			if ( $width && $height ) {
-				$thumbnail = $this->get_thumbnail( $editor, $width, $height, $size['width'], $size['height'], $size['crop'] );
+				$thumbnail = $this->get_thumbnail( $width, $height, $size['width'], $size['height'], $size['crop'] );
 
 				if ( $thumbnail ) {
 					$size['filename']   = wp_basename( $thumbnail['filename'] );
